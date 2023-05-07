@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Aplikasi Toko Online</string>
+    <string name="title_activity_menu">MenuActivity</string>
+    <string name="title1">Menu</string>
+    <string name="title2">Account</string>
+    <string name="title3">Notifications</string>
+</resources>
