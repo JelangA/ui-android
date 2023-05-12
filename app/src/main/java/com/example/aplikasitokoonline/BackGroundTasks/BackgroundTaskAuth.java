@@ -1,152 +1,104 @@
 package com.example.aplikasitokoonline.BackGroundTasks;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
-import com.example.aplikasitokoonline.utils.AppConst;
+import com.example.aplikasitokoonline.Activity.MenuActivity;
+import com.example.aplikasitokoonline.utils.Token;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 public class BackgroundTaskAuth extends AsyncTask<String, String, String> {
 
-    Context context;
+    private Context mContext;
+    private JSONObject requestData;
 
-    public BackgroundTaskAuth(Context context) {
-        this.context = context;
+    public BackgroundTaskAuth(Context mContext, JSONObject requestData) {
+        this.mContext = mContext;
+        this.requestData = requestData;
     }
 
     @Override
     protected String doInBackground(String... params) {
-        String type = params[0];
+        String urlString = params[0];
+        String result = "";
 
-        if (type.equals("login")){
-            String username = params[1];
-            String password = params[2];
+        try {
+            URL url = new URL(urlString);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Authorization", "Bearer " + Token.getToken());
+            connection.setDoOutput(true);
 
-            try {
-                URL url = new URL(AppConst.URL_LOGIN);
+            OutputStream outputStream = connection.getOutputStream();
+            outputStream.write(requestData.toString().getBytes());
+            outputStream.close();
 
-                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                httpURLConnection.setRequestMethod("POST");
-                httpURLConnection.addRequestProperty("Content-Type", "application/json");
-                httpURLConnection.setDoInput(true);
+            int responseCode = connection.getResponseCode();
 
-                JSONObject json = new JSONObject();
-                json.put("username", username);
-                json.put("password", password);
+            if (responseCode >= 200 && responseCode < 300) {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder stringBuilder = new StringBuilder();
+                String line;
 
-                OutputStream os = httpURLConnection.getOutputStream();
-                os.write(json.toString().getBytes(StandardCharsets.UTF_8));
-                os.close();
-
-                InputStream is = httpURLConnection.getInputStream();
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, "ISO-8859-1"));
-                StringBuilder sb = new StringBuilder();
-
-                String response = "";
-                while ((response = bufferedReader.readLine()) != null) {
-                    sb.append(response).append("\n");
+                while ((line = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(line);
                 }
+                JSONObject response = new JSONObject(stringBuilder.toString());
+                String data = response.getString("data");
+                result = response.getString("message");
+                String[] parts = data.split("\\|");
+                String token = parts[1];
+                Token.setToken(token);
 
-                response = sb.toString();
+            }else {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                StringBuilder stringBuilder = new StringBuilder();
+                String line;
 
-                is.close();
-                bufferedReader.close();
-                httpURLConnection.disconnect();
-
-                return response;
-
-            } catch (ProtocolException e) {
-                e.printStackTrace();
-                return "error 1";
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return "error 2";
-            } catch (JSONException e) {
-                e.printStackTrace();
-                return "Json not found";
-            }  catch (IOException e) {
-                e.printStackTrace();
-                return "Data not found";
-            }
-
-        } else if (type.equals("register")){
-            if (type.equals("login")){
-                String nama_lengkap = params[1];
-                String username = params[2];
-                String alamat = params[3];
-                String password = params[4];
-
-                try {
-                    URL url = new URL(AppConst.URL_REGISTER);
-
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    httpURLConnection.setRequestMethod("POST");
-                    httpURLConnection.addRequestProperty("Content-Type", "application/json");
-                    httpURLConnection.setDoInput(true);
-
-                    JSONObject json = new JSONObject();
-                    json.put("nama_lengkap", nama_lengkap);
-                    json.put("username", username);
-                    json.put("alamat", alamat);
-                    json.put("password", password);
-
-                    OutputStream os = httpURLConnection.getOutputStream();
-                    os.write(json.toString().getBytes(StandardCharsets.UTF_8));
-                    os.close();
-
-                    InputStream is = httpURLConnection.getInputStream();
-                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, "ISO-8859-1"));
-                    StringBuilder sb = new StringBuilder();
-
-                    String response = "";
-                    while ((response = bufferedReader.readLine()) != null) {
-                        sb.append(response).append("\n");
-                    }
-
-                    response = sb.toString();
-
-                    is.close();
-                    bufferedReader.close();
-                    httpURLConnection.disconnect();
-
-                    return response;
-
-                } catch (ProtocolException e) {
-                    e.printStackTrace();
-                    return "protocol error";
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                    return "url error";
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    return "Json not found";
-                }  catch (IOException e) {
-                    e.printStackTrace();
-                    return "Data not found";
+                while ((line = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(line);
                 }
+                JSONObject response = new JSONObject(stringBuilder.toString());
+                String error = response.getString("message");
+
+                result = error;
             }
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return "Task Gagal";
+
+        return "Task Failed URL Not Found";
     }
 
     @Override
-    protected void onPostExecute(String result) {
-        super.onPostExecute(result);
-        Toast.makeText(context, result, Toast.LENGTH_LONG).show();
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+        if (Token.getToken() != ""){
+            Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
+            if (s.contains("Berhasil Login") || s.contains("Berhasil Register")){
+                Intent intent = new Intent(mContext, MenuActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mContext.startActivity(intent);
+            }
+        }else{
+            Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
+        }
+
+        GetDataUser getDataUser = new GetDataUser(mContext.getApplicationContext());
+        getDataUser.execute("http://103.67.187.184/api/user");
+
     }
 }

@@ -16,6 +16,7 @@ public class MenuActivity extends AppCompatActivity {
 
     private ActivityMenuBinding binding;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

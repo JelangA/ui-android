@@ -1,12 +1,11 @@
 package com.example.aplikasitokoonline.models;
 
-public class Product {
-
+public class User {
     private int id;
+    private String address;
     private String name;
-    private int price;
+    private String username;
     private String image;
-    private double rating;
 
     public int getId() {
         return id;
@@ -16,7 +15,15 @@ public class Product {
         this.id = id;
     }
 
-    public String getName() {
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getNama() {
         return name;
     }
 
@@ -24,12 +31,12 @@ public class Product {
         this.name = name;
     }
 
-    public int getPrice() {
-        return price;
+    public String getUsername() {
+        return username;
     }
 
-    public void setPrice(int price) {
-        this.price = price;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getImage() {
@@ -38,13 +45,5 @@ public class Product {
 
     public void setImage(String image) {
         this.image = image;
-    }
-
-    public double getRating() {
-        return rating;
-    }
-
-    public void setRating(double rating) {
-        this.rating = rating;
     }
 }
